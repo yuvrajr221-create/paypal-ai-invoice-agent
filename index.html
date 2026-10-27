@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PayPal AI Invoice Agent</title>
+<style>
+body{font-family:sans-serif;max-width:560px;margin:0 auto;padding:12px;background:#f5f7fa}
+h1{font-size:20px}
+#log{background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px;min-height:160px}
+.m{margin:6px 0;padding:8px;border-radius:8px}
+.u{background:#dbeafe;text-align:right}
+.a{background:#eef2f7}
+.e{background:#fee2e2}
+form{display:flex;gap:6px;margin:10px 0}
+input{flex:1;padding:10px;font-size:16px}
+button{padding:10px;font-size:15px}
+a.btn{display:inline-block;background:#0070ba;color:#fff;padding:10px;border-radius:6px;text-decoration:none;margin:4px 0}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
+td,th{border:1px solid #ddd;padding:5px}
+</style></head><body>
+<h1>PayPal AI Invoice Agent</h1>
+<div id="log"></div>
+<form id="f"><input id="t" placeholder="e.g. Send Rahul a bill for 7 for logo design" autocomplete="off"><button>Send</button></form>
+<h3>Payments</h3><button id="sb">AI spending summary</button><div id="sum" class="m a" style="display:none"></div>
+<table id="p"></table>
+<script>
+const log=document.getElementById("log");
+function add(cls,text){const d=document.createElement("div");d.className="m "+cls;d.textContent=text;log.appendChild(d);return d}
+async function post(url,body){const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});return r.json()}
+async function load(){
+  const items=await (await fetch("/payments")).json();
+  const t=document.getElementById("p");t.textContent="";
+  const h=t.insertRow();["Who","What","USD","Status"].forEach(x=>{const c=document.createElement("th");c.textContent=x;h.appendChild(c)});
+  items.slice().reverse().forEach(i=>{const r=t.insertRow();[i.recipient,i.description,i.amount,i.status].forEach(x=>r.insertCell().textContent=x)});
+}
+document.getElementById("f").onsubmit=async e=>{
+  e.preventDefault();
+  const t=document.getElementById("t");const text=t.value.trim();if(!text)return;t.value="";
+  add("u",text);
+  const d=add("a","Thinking...");
+  try{
+    const r=await post("/chat",{message:text});
+    if(r.error){d.className="m e";d.textContent=r.error;return}
+    d.textContent="Invoice for "+r.recipient+": $"+r.amount+" ("+r.description+")";
+    if(r.approve_link.startsWith("https://www.sandbox.paypal.com/")){
+      const a=document.createElement("a");a.className="btn";a.href=r.approve_link;a.target="_blank";a.textContent="Pay with PayPal (sandbox)";
+      const b=document.createElement("button");b.textContent="I have paid";
+      b.onclick=async()=>{if(b.disabled)return;b.disabled=true;const c=await post("/capture",{order_id:r.order_id});if(c.error)b.disabled=false;
+        add(c.error?"e":"a",c.error?c.error:"Payment completed: "+c.order_id);load()};
+      d.appendChild(document.createElement("br"));d.appendChild(a);d.appendChild(document.createTextNode(" "));d.appendChild(b);
+    }
+    load();
+  }catch(x){d.className="m e";d.textContent="Server error"}
+};
+document.getElementById("sb").onclick=async()=>{const x=document.getElementById("sum");x.style.display="block";x.textContent="Thinking...";const r=await (await fetch("/summary")).json();x.textContent=r.error?r.error:r.summary};
+load();
+</script></body></html>
