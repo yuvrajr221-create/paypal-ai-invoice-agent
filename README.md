@@ -45,7 +45,7 @@ Open http://127.0.0.1:5000 in a browser.
 ## How to use
 1. Type: Send Rahul a bill for 7 for logo design, then press Send.
 2. Click "Pay with PayPal (sandbox)" and log in with your sandbox Personal (buyer) account. Approve the payment.
-3. After the example.com page appears, go back and click "I have paid".
+3. After you approve the payment in PayPal, you are redirected back to the app, the payment is captured automatically and shown as "Payment completed". If the redirect does not work, go back to the chat page and click "I have paid".
 4. The payment shows as COMPLETED. Click "AI spending summary" for an AI summary of your payments.
 
 Amounts are in USD. These are sandbox test payments only, no real money moves.

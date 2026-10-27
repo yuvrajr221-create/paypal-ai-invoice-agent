@@ -39,8 +39,8 @@ def create_order(amount, description="Invoice", currency="USD"):
             "amount": {"currency_code": currency, "value": f"{float(amount):.2f}"},
         }],
         "application_context": {
-            "return_url": "https://example.com/return",
-            "cancel_url": "https://example.com/cancel",
+            "return_url": "http://127.0.0.1:5000/return",
+            "cancel_url": "http://127.0.0.1:5000/cancel",
         },
     }
     r = requests.post(BASE + "/v2/checkout/orders", headers=_headers(), json=body, timeout=30)

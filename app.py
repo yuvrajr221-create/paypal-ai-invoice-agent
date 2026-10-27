@@ -81,5 +81,25 @@ def summary():
     except Exception:
         return jsonify(error="AI summary failed"), 502
 
+@app.route("/return")
+def paypal_return():
+    oid = request.args.get("token", "")
+    items = load()
+    rec = next((i for i in items if i["order_id"] == oid), None)
+    if rec is None:
+        return "Unknown order", 404
+    code, data = capture_order(oid)
+    issues = [d.get("issue") for d in data.get("details", [])] if isinstance(data, dict) else []
+    done = data.get("status") == "COMPLETED" or "ORDER_ALREADY_CAPTURED" in issues
+    if done:
+        rec["status"] = "COMPLETED"
+        save(items)
+        title = "Payment completed"
+    else:
+        title = "Payment not completed"
+    return ("<meta name='viewport' content='width=device-width,initial-scale=1'>"
+            "<h2>" + title + "</h2><a href='/'>Back to chat</a>")
+
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)
